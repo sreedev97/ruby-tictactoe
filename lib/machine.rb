@@ -1,4 +1,3 @@
-require 'pry'
 class Machine
   def play(board)
     return false if board.draw? || board.won?
@@ -15,7 +14,6 @@ class Machine
 
   def gameModeChoice(board)
     attack_choices, defense_choices = attack_moves(board), defense_moves(board)
-    binding.pry
     if !attack_choices.is_a?(Hash) || attack_choices.keys.max.to_i < defense_choices.keys.max.to_i
       return :defense
     else
