@@ -14,7 +14,7 @@ class Machine
 
   def gameModeChoice(board)
     attack_choices, defense_choices = attack_moves(board), defense_moves(board)
-    if !attack_choices.is_a?(Hash) || attack_choices.keys.max.to_i < defense_choices.keys.max.to_i
+    if !attack_choices.is_a?(Hash) || attack_choices.keys.max.to_i <= defense_choices.keys.max.to_i
       return :defense
     else
       return :attack
