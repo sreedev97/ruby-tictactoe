@@ -29,6 +29,7 @@ class GamePlay
     board.printBoard();
     print("Game has ended\n")
     puts "#{board.getInfo}"
+    board.save_moves
   end
 end
 
