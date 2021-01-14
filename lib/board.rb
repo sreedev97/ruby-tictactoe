@@ -1,10 +1,16 @@
+# frozen_string_literal: true
+
 require 'redis'
 require 'json'
-REDIS_SERV = Redis.new host: "localhost", port: '6379'
-REDIS_CHANNEL = "tictactoe"
+require 'pry'
+REDIS_SERV = Redis.new host: 'localhost', port: '6379'
+REDIS_CHANNEL = 'tictactoe'
 REDIS_ENABLED = false
 
 class Board
+  O_SPRITE = 'o'
+  X_SPRITE = 'x'
+  UNIN_SRPITE = '.'
   attr_accessor :rows, :current_player, :info, :winner, :machine, :id, :moves
   @@winPatterns = [
     # Horizontal Patterns
@@ -21,10 +27,8 @@ class Board
   ]
   def initialize
     @moves = []
-    @current_player = 'x'
-    @rows = [['.', '.', '.'],
-             ['.', '.', '.'],
-             ['.', '.', '.']]
+    @current_player = X_SPRITE
+    @rows = 3.times.map { 3.times.map { UNIN_SRPITE.dup } }
   end
 
   def won?
@@ -33,7 +37,7 @@ class Board
       possibility_map = possibility.map do |position|
         self.rows[position.first][position.last]
       end
-      if !possibility_map.uniq.include?('.') && possibility_map.uniq.length == 1
+      if !possibility_map.uniq.include?(UNIN_SRPITE) && possibility_map.uniq.length == 1
         self.winner = possibility_map.uniq.first
         winFlag = true; break
       end
@@ -42,30 +46,32 @@ class Board
   end
 
   def draw?
-    !self.won? && !self.rows.flatten.include?('.')
+    !self.won? && !self.rows.flatten.include?(UNIN_SRPITE)
+  end
+
+  def game_concluded?
+    won? || draw?
   end
 
   def switchPlayer
-    self.current_player = current_player == 'x' ? 'o' : 'x'
+    self.current_player = current_player == X_SPRITE ? O_SPRITE : X_SPRITE
   end
 
   def opponent
-    current_player == 'x' ? 'o' : 'x'
+    current_player == X_SPRITE ? O_SPRITE : X_SPRITE
   end
 
   def winPatterns
     @@winPatterns
   end
-  
-  def markBoard(row, col)
-    row, col = [row, col].map(&:pred)
-    if self.rows[row][col] != '.'
-      return false
-    end
-    self.rows[row][col] = self.current_player
-    @moves << {self.current_player => [row, col]}
+
+  def mark_board(row, col)
+    return false unless @rows[row][col] == UNIN_SRPITE
+
+    @rows[row][col] = @current_player
+    @moves << { @current_player => [row, col] }
     Board.saveBoard(self) if REDIS_ENABLED
-    return true
+    true
   end
 
   def save_moves

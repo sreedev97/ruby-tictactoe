@@ -1,1 +1,1 @@
-ruby ./gamePlay.rb
+ruby ./main.rb

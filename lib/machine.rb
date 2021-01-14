@@ -1,10 +1,11 @@
 class Machine
   def play(board)
-    return false if board.draw? || board.won?
+    return false if board.game_concluded?
+
     gameMode = gameModeChoice(board)
     row, col = gameMode == :defense ? defense_coordinates(board) : attack_coordinates(board)
     if board.rows[row][col] == '.'
-      board.markBoard(row.next, col.next)
+      board.mark_board(row, col)
       board.switchPlayer
       return board
     else
