@@ -10,7 +10,6 @@ class GamePlay
   def initialize
     @board = Board.new
     @graphics_h = GraphicsHandler.new
-    fetch_user_options
   end
 
   def fetch_user_options
@@ -19,10 +18,9 @@ class GamePlay
   end
 
   def play
+    fetch_user_options
     @graphics_h.draw_grid(@board.rows)
     game_loop
-  ensure
-    post_game_process
   end
 
   private
@@ -30,11 +28,12 @@ class GamePlay
   attr_accessor :board, :graphics_h
 
   def game_loop
+    flags = {}
     loop do
       if @board.game_concluded?
-        @graphics_h.render_result(@board.getInfo.to_s)
-        @graphics_h.get_player_input
-        next
+        flags[:play_again] = @graphics_h.render_result(@board.getInfo.to_s)
+        post_game_process
+        break
       end
 
       player_input = @graphics_h.get_player_input
@@ -45,10 +44,14 @@ class GamePlay
       @board.machine.play(@board) if @board.machine.is_a?(Machine)
       @graphics_h.draw_grid(@board.rows)
     end
+
+    return unless flags[:play_again]
+
+    @board = Board.new
+    play
   end
 
   def post_game_process
-    @graphics_h.render_result(@board.getInfo.to_s) if @board.game_concluded?
     @board.save_moves
   end
 end

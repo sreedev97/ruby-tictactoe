@@ -32,6 +32,10 @@ class GraphicsHandler
   end
 
   def render_splash
+    @renderer.draw_color = BACKGROUND_COLOR
+    @renderer.clear
+    @renderer.present
+
     @renderer.copy(
       renderer.create_texture_from(
         @result_font.render_solid('TIC-TAC-TOE', [255, 255, 255])
@@ -41,21 +45,26 @@ class GraphicsHandler
     option_buttons << draw_button(Board::SINGLE_PLAYER, 80, 200, 200, 100)
     option_buttons << draw_button(Board::MULTI_PLAYER, 300, 200, 200, 100)
     @renderer.present
-    input_event = wait_for_event
-    selected_game_type = option_buttons.find do |button|
-      button[:btnx].cover?(input_event.x) &&
-        button[:btny].cover?(input_event.y)
+    selected_game_type = nil
+    loop do
+      input_event = wait_for_event
+      selected_game_type = option_buttons.find do |button|
+        button[:btnx].cover?(input_event.x) &&
+          button[:btny].cover?(input_event.y)
+      end
+      break unless selected_game_type.nil?
     end
+
     { game_type: selected_game_type[:value] }
   end
 
   def draw_button(button_text, xcoord, ycoord, wid, hei)
     button_rect = SDL2::Rect.new(xcoord, ycoord, wid, hei)
     @renderer.draw_color = GRID_RENDER_COLOR
-    @renderer.draw_rect(button_rect)
+    @renderer.fill_rect(button_rect)
     @renderer.copy(
       renderer.create_texture_from(
-        @result_font.render_solid(button_text, GRID_RENDER_COLOR)
+        @result_font.render_solid(button_text, [255, 255, 255, 255])
       ),
       nil, SDL2::Rect.new(xcoord+10, ycoord+10, wid-20, hei-20))
 
@@ -98,10 +107,15 @@ class GraphicsHandler
     render_overlay
     @renderer.copy(
       renderer.create_texture_from(
-        @result_font.render_blended(result_text, [255, 255, 255])
+        @result_font.render_shaded(result_text, [255, 255, 255], [0, 0, 0])
       ),
       nil, SDL2::Rect.new(100, 50, 400, 100))
+
+    play_again_button = draw_button('Play Again', 150, 300, 300, 100)
     @renderer.present
+    input_event = wait_for_event
+
+    return true if play_again_button[:btnx].cover?(input_event.x) && play_again_button[:btny].cover?(input_event.y)
   end
 
   def render_overlay

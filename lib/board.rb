@@ -2,7 +2,7 @@
 
 require 'redis'
 require 'json'
-require 'pry'
+
 REDIS_SERV = Redis.new host: 'localhost', port: '6379'
 REDIS_CHANNEL = 'tictactoe'
 REDIS_ENABLED = false
@@ -99,9 +99,11 @@ class Board
   end
 
   def getInfo
-    self.info = "Player #{self.winner} has won" if self.won?
-    self.info == "Game Drawn" if self.draw?
-    return self.info
+    if won?
+      @info = "Player #{self.winner} has won"
+    elsif draw?
+      @info = 'Game Drawn'
+    end
   end
 
   def printBoard
