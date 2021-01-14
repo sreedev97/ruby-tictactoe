@@ -6,6 +6,7 @@ require_relative 'graphics.rb'
 
 # Game Loop
 class GamePlay
+  attr_accessor :gamestate
   def initialize
     @board = Board.new
     @graphics_h = GraphicsHandler.new
@@ -13,8 +14,8 @@ class GamePlay
   end
 
   def fetch_user_options
-    print '(1/2): '
-    @board.machine = Machine.new if gets.chomp.strip.to_i == 1
+    game_options = @graphics_h.render_splash
+    @board.machine = Machine.new if game_options[:game_type] == Board::SINGLE_PLAYER
   end
 
   def play
@@ -29,7 +30,13 @@ class GamePlay
   attr_accessor :board, :graphics_h
 
   def game_loop
-    until @board.game_concluded?
+    loop do
+      if @board.game_concluded?
+        @graphics_h.render_result(@board.getInfo.to_s)
+        @graphics_h.get_player_input
+        next
+      end
+
       player_input = @graphics_h.get_player_input
       mark_status  = @board.mark_board(player_input.row, player_input.col)
       next unless mark_status
@@ -41,7 +48,7 @@ class GamePlay
   end
 
   def post_game_process
-    puts @board.getInfo.to_s
+    @graphics_h.render_result(@board.getInfo.to_s) if @board.game_concluded?
     @board.save_moves
   end
 end

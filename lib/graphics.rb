@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require 'sdl2'
-require 'pry'
 require 'ostruct'
+require 'pry'
 
 # Graphics Rendering Handler
 class GraphicsHandler
@@ -16,7 +16,9 @@ class GraphicsHandler
   BACKGROUND_COLOR    = [0, 0, 0, 255].freeze
 
   def initialize
-    SDL2.init(SDL2::INIT_VIDEO | SDL2::INIT_EVENTS)
+    SDL2.init(SDL2::INIT_EVERYTHING)
+    SDL2::TTF.init
+    load_fonts
     @window = SDL2::Window.create(
       'TicTacToe',
       SDL2::Window::POS_CENTERED,
@@ -27,6 +29,37 @@ class GraphicsHandler
     @renderer.draw_blend_mode = SDL2::BlendMode::ADD
     @renderer.draw_color = BACKGROUND_COLOR
     @renderer.clear
+  end
+
+  def render_splash
+    @renderer.copy(
+      renderer.create_texture_from(
+        @result_font.render_solid('TIC-TAC-TOE', [255, 255, 255])
+      ),
+      nil, SDL2::Rect.new(100, 50, 400, 100))
+    option_buttons = []
+    option_buttons << draw_button(Board::SINGLE_PLAYER, 80, 200, 200, 100)
+    option_buttons << draw_button(Board::MULTI_PLAYER, 300, 200, 200, 100)
+    @renderer.present
+    input_event = wait_for_event
+    selected_game_type = option_buttons.find do |button|
+      button[:btnx].cover?(input_event.x) &&
+        button[:btny].cover?(input_event.y)
+    end
+    { game_type: selected_game_type[:value] }
+  end
+
+  def draw_button(button_text, xcoord, ycoord, wid, hei)
+    button_rect = SDL2::Rect.new(xcoord, ycoord, wid, hei)
+    @renderer.draw_color = GRID_RENDER_COLOR
+    @renderer.draw_rect(button_rect)
+    @renderer.copy(
+      renderer.create_texture_from(
+        @result_font.render_solid(button_text, GRID_RENDER_COLOR)
+      ),
+      nil, SDL2::Rect.new(xcoord+10, ycoord+10, wid-20, hei-20))
+
+    { btnx: (xcoord..(xcoord+wid)), btny: (ycoord..(ycoord+hei)), value: button_text }
   end
 
   def draw_grid(grid)
@@ -40,30 +73,60 @@ class GraphicsHandler
     @renderer.present
   end
 
-  def get_player_input
+  def wait_for_event
     input_event = 0
     loop do
       while ev = SDL2::Event.poll
         case ev
         when SDL2::Event::MouseButtonDown
           input_event = ev
+        when SDL2::Event::Quit
+          exit
         end
       end
       break unless input_event == 0
     end
+    input_event
+  end
+
+  def get_player_input
+    input_event = wait_for_event
     estimate_input_grid_coords(input_event.x, input_event.y)
+  end
+
+  def render_result(result_text)
+    render_overlay
+    @renderer.copy(
+      renderer.create_texture_from(
+        @result_font.render_blended(result_text, [255, 255, 255])
+      ),
+      nil, SDL2::Rect.new(100, 50, 400, 100))
+    @renderer.present
+  end
+
+  def render_overlay
+    @renderer.draw_color = [0, 0, 0, 120]
+    @renderer.fill_rect(
+      SDL2::Rect.new(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
+    )
+    @renderer.present
   end
 
   private
 
+  def load_fonts
+    @result_font = SDL2::TTF.open(File.join(File.dirname(__FILE__), '..', 'assets', 'fonts', 'jetbrainsmono_bold.ttf'), 40)
+  end
+
   def draw_box(colc, coli, rowc, rowi)
     @renderer.draw_color = fetch_draw_color(colc)
-    operation = colc == Board::UNIN_SRPITE ? :draw_rect : :fill_rect
     gridbox = SDL2::Rect.new(coli * GRID_BOX_W_SCALE, rowi * GRID_BOX_H_SCALE, GRID_BOX_W_SCALE, GRID_BOX_H_SCALE)
-    @renderer.send(
-      operation,      # x, y, w, h
-      gridbox
-    )
+
+    @renderer.copy(
+      renderer.create_texture_from(
+        @result_font.render_solid(colc, fetch_draw_color(colc))
+      ),
+      nil, gridbox)
   end
 
   def estimate_input_grid_coords(evx, evy)

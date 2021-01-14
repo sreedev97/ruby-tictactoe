@@ -11,6 +11,8 @@ class Board
   O_SPRITE = 'o'
   X_SPRITE = 'x'
   UNIN_SRPITE = '.'
+  SINGLE_PLAYER = 'Single Player'
+  MULTI_PLAYER  = 'Multi Player'
   attr_accessor :rows, :current_player, :info, :winner, :machine, :id, :moves
   @@winPatterns = [
     # Horizontal Patterns
